@@ -4,7 +4,8 @@ Unity 2.5D Circus game project
 
 ### To do list:
 - [ ] Create main menu
-- [ ] Change cursor
+- [x] Change cursor
+- [x] Change default skybox
 - [ ] Add animations to dice and clouds
 - [ ] Add sounds and music
 - [ ] Create character selection screen
