@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
 
 public class DiceRollScript : MonoBehaviour
 {
@@ -15,10 +17,12 @@ public class DiceRollScript : MonoBehaviour
     public bool firstThrow = false;
     public bool isLanded = false;
 
+    [SerializeField] private Button rollButton;
 
     private void Awake()
     {
         Initialize();
+        rollButton.onClick.AddListener(RollDice);
     }
 
     private void Initialize()
@@ -32,12 +36,20 @@ public class DiceRollScript : MonoBehaviour
 
     public void RollDice()
     {
-        rigidbody.isKinematic = false;
-        forceX = Random.Range(0, maxRandForceVal);
-        forceY = Random.Range(0, maxRandForceVal);
-        forceZ = Random.Range(0, maxRandForceVal);
-        rigidbody.AddForce(Vector3.up * Random.Range(800, startRollingForce));
-        rigidbody.AddTorque(forceX, forceY, forceZ);
+        if (!isLanded)
+        {
+            if (firstThrow || isLanded)
+                return;
+
+            rigidbody.isKinematic = false;
+            forceX = Random.Range(0, maxRandForceVal);
+            forceY = Random.Range(0, maxRandForceVal);
+            forceZ = Random.Range(0, maxRandForceVal);
+            rigidbody.AddForce(Vector3.up * Random.Range(800, startRollingForce));
+            rigidbody.AddTorque(forceX, forceY, forceZ);
+
+            firstThrow = true;
+        }
     }
 
     public void ResetDice()
@@ -50,22 +62,20 @@ public class DiceRollScript : MonoBehaviour
 
     private void Update()
     {
-        if (rigidbody != null)
-            if (Input.GetMouseButton(0) && !isLanded ||
-                Input.GetMouseButton(0) && !firstThrow)
-            {
+        if (rigidbody != null && !isLanded && firstThrow)
+        {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
-                if(Physics.Raycast(ray, out hit))
+                if (Physics.Raycast(ray, out hit))
                 {
-                    if(hit.collider != null &&
+                    if (hit.collider != null &&
                         hit.collider.gameObject == this.gameObject)
                     {
                         if (!firstThrow)
                             firstThrow = true;
                         RollDice();
                     }
-                    
+
                 }
             }
     }

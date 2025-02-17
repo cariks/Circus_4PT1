@@ -19,4 +19,9 @@ public class NameScript : MonoBehaviour
         tMP.color = new Color32((byte)Random.Range(0, 255),
             (byte)Random.Range(0, 255), (byte)Random.Range(0, 255), 255);
     }
+
+    public string GetPlayerName()
+    {
+        return tMP.text;
+    }
 }

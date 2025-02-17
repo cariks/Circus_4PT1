@@ -17,6 +17,8 @@ public class PlayerScript : MonoBehaviour
 
     private const string textFileName = "playerNames";
 
+    public static event Action<List<GameObject>> OnPlayersReady;
+
     void Start()
     {
         characterIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
@@ -30,15 +32,21 @@ public class PlayerScript : MonoBehaviour
         string[] nameArray = ReadLinesFromFile(textFileName);
         Debug.Log(nameArray.Length);
 
-        for (int i=0; i<otherPlayers.Length-1; i++)
+        List<GameObject> players = new List<GameObject> { mainCharacter };
+
+        for (int i = 0; i < otherPlayers.Length - 1; i++)
         {
-            spawnPoint.transform.position += new Vector3(0.2f, 0, 0.08f);
+            spawnPoint.transform.position += new Vector3(1f, 0, 0.08f);
             index = Random.Range(0, playerPrefabs.Length);
             GameObject character = Instantiate(playerPrefabs[index],
                 spawnPoint.transform.position, Quaternion.identity);
             character.GetComponent<NameScript>().SetPlayerName(
                 nameArray[Random.Range(0, nameArray.Length)]);
+            players.Add(character);
         }
+
+        // izsaukt notikumu, kad ir ieladeti vi
+        OnPlayersReady?.Invoke(players);
     }
 
     string[] ReadLinesFromFile(string fileName)
