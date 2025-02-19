@@ -1,21 +1,20 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
-
 
 public class DiceRollScript : MonoBehaviour
 {
+    private Rigidbody rigidbody;
+    private Vector3 startPosition;
 
-    Rigidbody rigidbody;
-    Vector3 position;
-    [SerializeField]
-    private float maxRandForceVal, startRollingForce;
-    float forceX, forceY, forceZ;
-    public string difeFaceNum;
+    [SerializeField] private float minThrowForce = 200f, maxThrowForce = 600f;
+    [SerializeField] private float minTorque = 1000f, maxTorque = 3000f;
+
+    public string difeFaceNum = "?"; // По умолчанию отображаем "?"
     public bool firstThrow = false;
     public bool isLanded = false;
+    public bool initialThrowDone = false;
 
     [SerializeField] private Button rollButton;
 
@@ -23,33 +22,58 @@ public class DiceRollScript : MonoBehaviour
     {
         Initialize();
         rollButton.onClick.AddListener(RollDice);
+        isLanded = false;
     }
 
     private void Initialize()
     {
         rigidbody = GetComponent<Rigidbody>();
         rigidbody.isKinematic = true;
-        position = transform.position;
-        transform.rotation = new Quaternion(Random.Range(0, 360),
-            Random.Range(0, 360), Random.Range(0, 360), 0);
+        startPosition = transform.position;
+        RandomizeRotation();
+        isLanded = false;
+    }
+
+    private void RandomizeRotation()
+    {
+        transform.rotation = Random.rotation;
+    }
+
+    public void StartInitialRoll()
+    {
+        if (initialThrowDone) return;
+
+        transform.position = startPosition + new Vector3(0, 5, 0);
+        rigidbody.isKinematic = false; // Разрешаем физику
+
+        float throwForce = Random.Range(minThrowForce, maxThrowForce);
+        rigidbody.AddForce(Vector3.down * throwForce);
+
+        float torqueX = Random.Range(minTorque, maxTorque);
+        float torqueY = Random.Range(minTorque, maxTorque);
+        float torqueZ = Random.Range(minTorque, maxTorque);
+        rigidbody.AddTorque(new Vector3(torqueX, torqueY, torqueZ));
+
+        initialThrowDone = true;
     }
 
     public void RollDice()
     {
-        if (!isLanded)
-        {
-            if (firstThrow || isLanded)
-                return;
+        if (!isLanded) return;
 
-            rigidbody.isKinematic = false;
-            forceX = Random.Range(0, maxRandForceVal);
-            forceY = Random.Range(0, maxRandForceVal);
-            forceZ = Random.Range(0, maxRandForceVal);
-            rigidbody.AddForce(Vector3.up * Random.Range(800, startRollingForce));
-            rigidbody.AddTorque(forceX, forceY, forceZ);
+        difeFaceNum = "?"; // Сбрасываем значение перед броском
+        rigidbody.isKinematic = false;
 
-            firstThrow = true;
-        }
+        float throwForce = Random.Range(minThrowForce, maxThrowForce);
+        rigidbody.AddForce(Vector3.up * throwForce);
+
+        float torqueX = Random.Range(minTorque, maxTorque);
+        float torqueY = Random.Range(minTorque, maxTorque);
+        float torqueZ = Random.Range(minTorque, maxTorque);
+        rigidbody.AddTorque(new Vector3(torqueX, torqueY, torqueZ));
+
+        isLanded = false;
+        firstThrow = true;
     }
 
     public void ResetDice()
@@ -57,26 +81,8 @@ public class DiceRollScript : MonoBehaviour
         rigidbody.isKinematic = true;
         firstThrow = false;
         isLanded = false;
-        transform.position = position;
-    }
-
-    private void Update()
-    {
-        if (rigidbody != null && !isLanded && firstThrow)
-        {
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit))
-                {
-                    if (hit.collider != null &&
-                        hit.collider.gameObject == this.gameObject)
-                    {
-                        if (!firstThrow)
-                            firstThrow = true;
-                        RollDice();
-                    }
-
-                }
-            }
+        difeFaceNum = "?"; // Сброс значения
+        transform.position = startPosition;
+        RandomizeRotation();
     }
 }
