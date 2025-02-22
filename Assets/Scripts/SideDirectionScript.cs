@@ -14,6 +14,8 @@ public class SideDirectionScript : MonoBehaviour
     {
         diceRollScript = FindObjectOfType<DiceRollScript>();
         allFaces = GetComponentsInChildren<Collider>();
+
+        Debug.Log($"[SideDirectionScript] Found {allFaces.Length} faces.");
     }
 
     private void Update()
@@ -29,18 +31,18 @@ public class SideDirectionScript : MonoBehaviour
                 diceRollScript.isLanded = true;
                 landedFace = GetLowestFace();
 
-                // Проверяем выпавшую грань только если кубик был брошен вручную
                 if (!string.IsNullOrEmpty(landedFace) && diceRollScript.firstThrow)
                 {
                     diceRollScript.difeFaceNum = landedFace;
-                    Debug.Log("Dice: " + landedFace);
+                    Debug.Log($"[SideDirectionScript] Dice landed on: {landedFace}");
                 }
                 else
                 {
                     diceRollScript.difeFaceNum = "?";
+                    Debug.LogError("[SideDirectionScript] ERROR: Failed to determine landed face.");
                 }
 
-                    hasCheckedLanded = true;
+                hasCheckedLanded = true;
             }
         }
         else
@@ -60,6 +62,7 @@ public class SideDirectionScript : MonoBehaviour
             if (face.CompareTag("DiceFace"))
             {
                 float faceY = face.transform.position.y;
+                Debug.Log($"[GetLowestFace] Checking face {face.name} at Y={faceY}");
 
                 if (faceY < lowestY)
                 {
@@ -67,8 +70,13 @@ public class SideDirectionScript : MonoBehaviour
                     lowestFace = face.name;
                 }
             }
+            else
+            {
+                Debug.LogWarning($"[GetLowestFace] Face {face.name} does not have tag 'DiceFace'!");
+            }
         }
 
+        Debug.Log($"[GetLowestFace] Determined lowest face: {lowestFace}");
         return lowestFace;
     }
 }

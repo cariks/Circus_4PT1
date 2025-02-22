@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Versioning;
@@ -19,6 +19,9 @@ public class PlayerScript : MonoBehaviour
 
     public static event Action<List<GameObject>> OnPlayersReady;
 
+    public static event Action<GameObject> OnPlayerReady; // Создаём событие для главного игрока
+
+
     void Start()
     {
         characterIndex = PlayerPrefs.GetInt("SelectedCharacter", 0);
@@ -28,6 +31,8 @@ public class PlayerScript : MonoBehaviour
         mainCharacter.GetComponent<NameScript>().SetPlayerName(
             PlayerPrefs.GetString("PlayerName"));
 
+        OnPlayerReady?.Invoke(mainCharacter);
+
         otherPlayers = new int[PlayerPrefs.GetInt("PlayerCount")];
         string[] nameArray = ReadLinesFromFile(textFileName);
         Debug.Log(nameArray.Length);
@@ -36,7 +41,7 @@ public class PlayerScript : MonoBehaviour
 
         for (int i = 0; i < otherPlayers.Length - 1; i++)
         {
-            spawnPoint.transform.position += new Vector3(1f, 0, 0.08f);
+            spawnPoint.transform.position += new Vector3(0.4f, 0, 0.08f);
             index = Random.Range(0, playerPrefabs.Length);
             GameObject character = Instantiate(playerPrefabs[index],
                 spawnPoint.transform.position, Quaternion.identity);
