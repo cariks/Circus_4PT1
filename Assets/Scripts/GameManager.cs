@@ -7,7 +7,9 @@ using UnityEngine.Rendering.PostProcessing;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance;
+    public static GameManager Instance { get; private set; }
+
+
     public List<GameObject> players = new List<GameObject>(); // Список игроков
     public int currentPlayerIndex = 0; // Текущий игрок
 
@@ -27,13 +29,21 @@ public class GameManager : MonoBehaviour
     public PostProcessVolume postProcessVolume; // Ссылка на Post-process Volume
     private DepthOfField dof; // Переменная для хранения эффекта глубины резкости
 
+    public GameObject PostProcess; // Пустой объект с PostProcess
+    private const string ShaderPrefKey = "ShadersEnabled"; // Ключ из настроек
+
 
     private void Awake()
     {
         if (Instance == null)
+        {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // Сохраняем GameManager между сценами
+        }
         else
-            Destroy(gameObject);
+        {
+        Destroy(gameObject);
+        }
 
         PlayerScript.OnPlayersReady += InitializePlayers;
         FindAllTiles();
@@ -41,6 +51,12 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        bool shadersEnabled = PlayerPrefs.GetInt(ShaderPrefKey, 1) == 1;
+        SetShaders(shadersEnabled);
+
+        DynamicGI.UpdateEnvironment(); // Обновляем глобальное освещение при загрузке сцены
+
+
         cam.transform.position = startCameraPosition;
         cam.transform.rotation = startCameraRotation;
 
@@ -67,6 +83,16 @@ public class GameManager : MonoBehaviour
         }
 
         StartCoroutine(StartGameSequence());
+    }
+
+    public void SetShaders(bool isEnabled)
+    {
+        if (PostProcess != null)
+        {
+            PostProcess.SetActive(isEnabled);
+        }
+
+        DynamicGI.UpdateEnvironment(); // Обновляем глобальное освещение
     }
 
     private IEnumerator StartGameSequence()

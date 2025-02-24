@@ -1674,7 +1674,7 @@ TextureImporter:
         width: 671
         height: 73
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -1682,6 +1682,69 @@ TextureImporter:
       bones: []
       spriteID: 57be085c443b0c6458e3d42f4cfdeb3e
       internalID: -1544543776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GUI_49
+      rect:
+        serializedVersion: 2
+        x: 2836
+        y: 1095
+        width: 67
+        height: 362
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f8b7b0408c5ece74da199763a0523571
+      internalID: -1601547472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GUI_50
+      rect:
+        serializedVersion: 2
+        x: 2840
+        y: 812
+        width: 59
+        height: 233
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d007871f54b279c4b93055ec99d5d49d
+      internalID: -354957662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GUI_56
+      rect:
+        serializedVersion: 2
+        x: 2838
+        y: 383
+        width: 64
+        height: 407
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7b7bc478dbdf24e4994b49f323766e12
+      internalID: 21300098
       vertices: []
       indices: 
       edges: []
@@ -1741,7 +1804,9 @@ TextureImporter:
       GUI_46: 21300082
       GUI_47: 21300084
       GUI_48: 21300086
+      GUI_49: -1601547472
       GUI_5: 21300010
+      GUI_50: -354957662
       GUI_51: 21300088
       GUI_52: 21300090
       GUI_53: 21300092

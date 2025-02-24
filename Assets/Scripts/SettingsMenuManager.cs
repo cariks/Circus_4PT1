@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
+using TMPro;
+using System.Collections.Generic;
 
 public class SettingsMenuManager : MonoBehaviour
 {
@@ -12,6 +14,17 @@ public class SettingsMenuManager : MonoBehaviour
     private float defaultSfxVolume;
     private float lastMusicVolume; // Переменная для хранения последнего значения громкости музыки
     private float lastSfxVolume;   // Переменная для хранения последнего значения громкости SFX
+
+    public TMP_Dropdown ResDropDown;
+    public Toggle ShaderToggle, FullScreenToggle;
+
+    private const string ShaderPrefKey = "ShadersEnabled"; // Ключ для хранения
+
+    Resolution[] AllResolutions;
+    bool isShaderOn;
+    bool IsFullScreen;
+    int SelectedResolution;
+    List<Resolution> SelectedResolutionList = new List<Resolution>();
 
     void Start()
     {
@@ -34,6 +47,54 @@ public class SettingsMenuManager : MonoBehaviour
         // Устанавливаем начальное состояние слайдеров
         musicVol.interactable = !musicToggle.isOn;
         sfxVol.interactable = !sfxToggle.isOn;
+
+
+
+        // Загружаем сохранённое значение и применяем его к Toggle
+        ShaderToggle.isOn = PlayerPrefs.GetInt(ShaderPrefKey, 1) == 1;
+
+        // Подписываемся на изменение Toggle
+        ShaderToggle.onValueChanged.AddListener(OnToggleChanged);
+
+
+        IsFullScreen = true;
+        AllResolutions = Screen.resolutions;
+
+        List<string> resolutionStringList = new List<string>();
+        string newRes;
+        foreach(Resolution res in AllResolutions)
+        {
+            newRes = res.width.ToString() + " x " + res.height.ToString();
+            if(!resolutionStringList.Contains(newRes))
+            {
+                resolutionStringList.Add(newRes);
+                SelectedResolutionList.Add(res);
+            }
+            resolutionStringList.Add(res.ToString());
+        }
+
+        ResDropDown.AddOptions(resolutionStringList);
+    }
+
+    private void OnToggleChanged(bool isOn)
+    {
+        PlayerPrefs.SetInt(ShaderPrefKey, isOn ? 1 : 0);
+        PlayerPrefs.Save(); // Сохраняем значение в настройках
+
+        // Передаём новое значение в GameManager
+        GameManager.Instance.SetShaders(isOn);
+    }
+
+    public void ChangeResolution()
+    {
+        SelectedResolution = ResDropDown.value;
+        Screen.SetResolution(SelectedResolutionList[SelectedResolution].width, SelectedResolutionList[SelectedResolution].height, IsFullScreen);
+    }
+
+    public void ChangeFullScreen()
+    {
+        IsFullScreen = FullScreenToggle.isOn;
+        Screen.SetResolution(SelectedResolutionList[SelectedResolution].width, SelectedResolutionList[SelectedResolution].height, IsFullScreen);
     }
 
     public void ChangeMusicVolume()
