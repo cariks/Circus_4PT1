@@ -28,31 +28,34 @@ public class PlayerScript : MonoBehaviour
         GameObject mainCharacter = Instantiate(playerPrefabs[characterIndex],
             spawnPoint.transform.position, Quaternion.identity);
 
-        mainCharacter.GetComponent<NameScript>().SetPlayerName(
-            PlayerPrefs.GetString("PlayerName"));
-
+        mainCharacter.GetComponent<NameScript>().SetPlayerName(PlayerPrefs.GetString("PlayerName"));
         OnPlayerReady?.Invoke(mainCharacter);
 
-        otherPlayers = new int[PlayerPrefs.GetInt("PlayerCount")];
+        // Получаем количество других игроков
+        int playerCount = PlayerPrefs.GetInt("PlayerCount");
+
+        // Создаем массив otherPlayers для ботов
+        otherPlayers = new int[playerCount - 1]; // -1 потому что главный игрок не учитывается
         string[] nameArray = ReadLinesFromFile(textFileName);
-        Debug.Log(nameArray.Length);
 
         List<GameObject> players = new List<GameObject> { mainCharacter };
 
-        for (int i = 0; i < otherPlayers.Length - 1; i++)
+        for (int i = 0; i < otherPlayers.Length; i++) // Здесь мы создаем только других игроков
         {
             spawnPoint.transform.position += new Vector3(0.4f, 0, 0.08f);
             index = Random.Range(0, playerPrefabs.Length);
-            GameObject character = Instantiate(playerPrefabs[index],
-                spawnPoint.transform.position, Quaternion.identity);
-            character.GetComponent<NameScript>().SetPlayerName(
-                nameArray[Random.Range(0, nameArray.Length)]);
+            GameObject character = Instantiate(playerPrefabs[index], spawnPoint.transform.position, Quaternion.identity);
+            character.GetComponent<NameScript>().SetPlayerName(nameArray[Random.Range(0, nameArray.Length)]);
             players.Add(character);
+
+            // Присваиваем флаг bot для всех, кроме главного игрока
+            character.GetComponent<PlayerController>().isBot = true;
         }
 
-        // izsaukt notikumu, kad ir ieladeti vi
+        // Извлекаем событие, когда все игроки готовы
         OnPlayersReady?.Invoke(players);
     }
+
 
     string[] ReadLinesFromFile(string fileName)
     {

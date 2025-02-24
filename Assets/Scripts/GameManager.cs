@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
+using UnityEngine.UI;
+using UnityEngine.Rendering.PostProcessing;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,12 +12,21 @@ public class GameManager : MonoBehaviour
     public int currentPlayerIndex = 0; // Текущий игрок
 
     public CinemachineVirtualCamera cam; // Cinemachine-камера
+    public Transform diceTransform; // Убедись, что сюда назначен сам кубик
+    public Transform TileStart;
+
     public DiceRollScript dice; // Ссылка на скрипт кубика
 
     private Vector3 startCameraPosition = new Vector3(9, 25, -7f); // Позиция камеры при старте
     private Quaternion startCameraRotation = Quaternion.Euler(60, 0, 0); // Стартовый угол камеры
 
     public bool isPlayerMoving = false; // Флаг, проверяющий, движется ли игрок
+
+    [SerializeField] public Button rollButton1;
+
+    public PostProcessVolume postProcessVolume; // Ссылка на Post-process Volume
+    private DepthOfField dof; // Переменная для хранения эффекта глубины резкости
+
 
     private void Awake()
     {
@@ -36,6 +47,8 @@ public class GameManager : MonoBehaviour
         if (dice != null)
         {
             dice.gameObject.SetActive(false);
+            DiceRollScript.OnDiceRolled += SwitchCameraToDice;
+
         }
 
         for (int i = 0; i < players.Count; i++)
@@ -47,6 +60,12 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // Получаем компонент DepthOfField из PostProcessVolume
+        if (postProcessVolume.profile.TryGetSettings(out dof))
+        {
+            dof.focusDistance.value = 8f; // Устанавливаем начальное значение
+        }
+
         StartCoroutine(StartGameSequence());
     }
 
@@ -54,15 +73,24 @@ public class GameManager : MonoBehaviour
     {
         dice.gameObject.SetActive(false);
 
+        if (dof != null)
+        {
+            dof.focusDistance.value = 8f;
+        }
+
         yield return new WaitForSeconds(2f); // Ждём 2 секунды, показывая поле
+
+        StartCoroutine(SmoothFocusDistance(8f, 5.6f, 3f));
 
         if (players.Count > 0)
         {
-            GameObject targetPlayer = players[currentPlayerIndex];
+            GameObject targetPlayer = players[0];
 
-            StartCoroutine(SmoothCameraAim(targetPlayer.transform, 0.5f)); // Камера начинает наводиться
-            yield return StartCoroutine(SmoothCameraTransition(targetPlayer.transform, 1f)); // Камера движется к игроку
+
+            StartCoroutine(SmoothCameraAim(players[0].transform, 0.01f)); // Камера начинает наводиться
+            yield return StartCoroutine(SmoothCameraTransition(targetPlayer.transform, 1.5f)); // Камера движется к игроку
         }
+
 
         yield return new WaitForSeconds(0.5f); // Короткая пауза перед броском
 
@@ -72,6 +100,29 @@ public class GameManager : MonoBehaviour
             dice.StartInitialRoll(); // Автоматически бросаем кубик
             dice.gameObject.SetActive(true);
         }
+
+        yield return new WaitForSeconds(2f);
+
+
+
+
+        //cam.LookAt = diceTransform;
+
+    }
+
+    private IEnumerator SmoothFocusDistance(float start, float end, float duration)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t = elapsed / duration;
+            dof.focusDistance.value = Mathf.Lerp(start, end, t);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        dof.focusDistance.value = end;
     }
 
     private IEnumerator SmoothCameraTransition(Transform target, float duration)
@@ -107,7 +158,9 @@ public class GameManager : MonoBehaviour
         float elapsedTime = 0;
         while (elapsedTime < duration)
         {
-            cam.transform.rotation = Quaternion.Lerp(startRotation, targetRotation, elapsedTime / duration);
+            float t = elapsedTime / duration;
+            cam.transform.rotation = Quaternion.Lerp(startRotation, targetRotation, t);
+
             elapsedTime += Time.deltaTime;
             yield return null;
         }
@@ -156,55 +209,69 @@ public class GameManager : MonoBehaviour
     {
         if (isPlayerMoving) yield break;
 
+        cam.LookAt = player.transform;
+
+
+
         yield return new WaitUntil(() => dice.IsStopped());
         yield return new WaitUntil(() => dice.difeFaceNum != "?");
 
         isPlayerMoving = true;
 
+
+
+        StartCoroutine(SmoothCameraTransition(players[currentPlayerIndex].transform, 0.1f));
+
         PlayerController playerController = player.GetComponent<PlayerController>();
+        int lastTileIndex = tiles.Count - 1;
 
         while (steps != 0)
         {
             int currentTileIndex = playerController.currentTileIndex;
-            int lastTileIndex = tiles.Count - 1;
             int targetTileIndex = currentTileIndex + steps;
 
             Debug.Log($"[MovePlayer] Player {playerController.playerIndex} ({player.name}) starts at {currentTileIndex}, moving {steps} steps.");
 
-            bool movingForward = steps > 0;
+            yield return new WaitForSeconds(0.5f);
+            // 1️ Сначала проверяем, попал ли игрок ровно на финиш
+            if (targetTileIndex == lastTileIndex)
+            {
+                yield return StartCoroutine(MoveStepByStep(player, currentTileIndex, targetTileIndex, 1));
+                playerController.currentTileIndex = lastTileIndex;
 
+                Debug.Log($"[MovePlayer] 🎉 Player {playerController.playerIndex} ({player.name}) reached the finish exactly! 🎉");
+
+                steps = 0; // Победа, больше ходов не делаем
+                break;
+            }
+
+            // 2️ Затем проверяем, перескакивает ли он финиш
             if (targetTileIndex > lastTileIndex)
             {
                 int overshoot = targetTileIndex - lastTileIndex;
-                Debug.Log($"[MovePlayer] Player reached the finish at {lastTileIndex}, needs to go back {overshoot} steps.");
+                targetTileIndex = lastTileIndex; // Доходим до финиша
 
-                // Доходим до финиша
-                yield return StartCoroutine(MoveStepByStep(player, currentTileIndex, lastTileIndex, 1));
+                yield return StartCoroutine(MoveStepByStep(player, currentTileIndex, targetTileIndex, 1));
+                playerController.currentTileIndex = lastTileIndex;
 
-                // Начинаем движение назад сразу же, не телепортируем
-                targetTileIndex = lastTileIndex - overshoot;
-                steps = -overshoot; // Обновляем шаги на отрицательные
-                movingForward = false;
+                Debug.Log($"[MovePlayer] Player reached the finish at {lastTileIndex}, moving back {overshoot} steps.");
+
+                // Теперь устанавливаем штрафные очки
+                tiles[lastTileIndex].isBadTile = true;
+                tiles[lastTileIndex].penaltySteps = overshoot;
+
+                steps = -overshoot;
+                continue;
             }
 
-            // Обработка движения назад
-            if (steps < 0)
-            {
-                // Начинаем движение назад, двигаемся шаг за шагом
-                yield return StartCoroutine(MoveStepByStep(player, playerController.currentTileIndex, targetTileIndex, -1));
-            }
-            else
-            {
-                // Двигаемся вперед, как обычно
-                yield return StartCoroutine(MoveStepByStep(player, playerController.currentTileIndex, targetTileIndex, 1));
-            }
-
-            // Обновляем позицию игрока
-            Tile targetTile = tiles[targetTileIndex];
+            // 3️⃣ Обычное перемещение
+            yield return StartCoroutine(MoveStepByStep(player, currentTileIndex, targetTileIndex, steps > 0 ? 1 : -1));
             playerController.currentTileIndex = targetTileIndex;
+            Tile targetTile = tiles[targetTileIndex];
+
             Debug.Log($"[MovePlayer] Player {playerController.playerIndex} ({player.name}) landed on tile {targetTileIndex} (Bad: {targetTile.isBadTile})");
 
-            // Проверка на плохую клетку
+            // Проверяем, "плохая" ли клетка
             if (targetTile.isBadTile)
             {
                 int penalty = targetTile.penaltySteps;
@@ -225,6 +292,10 @@ public class GameManager : MonoBehaviour
         isPlayerMoving = false;
         NextTurn();
     }
+
+
+
+
 
 
 
@@ -280,33 +351,69 @@ public class GameManager : MonoBehaviour
 
 
 
-
-
-
-    public void RollDice()
+    private void SwitchCameraToDice()
     {
-        if (isPlayerMoving) return;  // Блокируем подбрасывание кубика, если игрок двигается
-        Debug.Log("Rolling dice...");
-        dice.RollDice(); // Просто просим кубик броситься
+        // Здесь мы только настраиваем камеру, чтобы она смотрела на кубик, не двигаясь.
+        cam.LookAt = diceTransform;
+        cam.Follow = TileStart; // Камера не следует за кубиком, только смотрит на него
+
+
     }
+
 
     public void OnDiceRolled(int diceValue)
     {
         Debug.Log($"[OnDiceRolled] Dice rolled: {diceValue}");
+
         StartCoroutine(MovePlayer(players[currentPlayerIndex], diceValue));
     }
 
     public void NextTurn()
     {
+        rollButton1.interactable = false;  // Делаем кнопку неактивной
+
         if (isPlayerMoving) return; // Если игрок еще двигается, не начинаем следующий ход
 
         currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
 
         Debug.Log($"Switching to player {currentPlayerIndex}, {players[currentPlayerIndex].name}.");
 
-        // Переводим камеру на нового игрока
-        StartCoroutine(SmoothCameraTransition(players[currentPlayerIndex].transform, 1f));
+        // Переводим камеру на игрока после завершения хода
+        cam.LookAt = players[currentPlayerIndex].transform; // Камера будет смотреть на нового игрока
+        cam.Follow = players[currentPlayerIndex].transform; // Камера будет следовать за новым игроком
+
+        // Проверяем, является ли игрок ботом и если да, подбрасываем кубик
+        StartCoroutine(HandleBotTurn());
     }
+
+    private IEnumerator HandleBotTurn()
+    {
+        // Проверяем, является ли текущий игрок ботом
+        if (players[currentPlayerIndex].GetComponent<PlayerController>().isBot)
+        {
+            rollButton1.interactable = false;  // Делаем кнопку неактивной
+
+            SwitchCameraToDice();
+
+            yield return new WaitForSeconds(1f); // Задержка перед ходом бота
+
+            
+            // Бросаем кубик для бота
+            DiceRollScript diceRollScript = dice.GetComponent<DiceRollScript>();
+
+            if (diceRollScript != null)
+            {
+                // Вызываем метод для подбрасывания кубика
+                diceRollScript.RollDice();
+            }
+        }
+        else
+        {
+            rollButton1.interactable = true;
+        }
+    }
+
+
 
 
 
@@ -314,5 +421,11 @@ public class GameManager : MonoBehaviour
     private void OnDestroy()
     {
         PlayerScript.OnPlayersReady -= InitializePlayers;
+
+        // Отписываемся от события при уничтожении объекта
+        if (dice != null)
+        {
+            DiceRollScript.OnDiceRolled -= SwitchCameraToDice;
+        }
     }
 }

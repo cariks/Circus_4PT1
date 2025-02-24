@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Cinemachine;
 
 public class DiceRollScript : MonoBehaviour
 {
@@ -53,7 +54,6 @@ public class DiceRollScript : MonoBehaviour
         }
         else
         {
-            rollButton.interactable = true;  // Включаем кнопку
         }
     }
 
@@ -91,11 +91,24 @@ public class DiceRollScript : MonoBehaviour
 
     }
 
+    public delegate void DiceRolledEvent();
+    public static event DiceRolledEvent OnDiceRolled;
+
     public void RollDice()
     {
         if (!isLanded || GameManager.Instance.isPlayerMoving) return;
 
-        Debug.Log("[RollDice] Rolling the dice...");
+        rollButton.interactable = false;  // Делаем кнопку неактивной
+
+        Debug.Log("[RollDice] Rolling the dice in 0.5 seconds...");
+
+        // Запускаем корутину с задержкой
+        StartCoroutine(RollDiceWithDelay());
+    }
+
+    private IEnumerator RollDiceWithDelay()
+    {
+        yield return new WaitForSeconds(0.001f); // Ждём 0.5 секунды перед броском
 
         difeFaceNum = "?"; // Сбрасываем значение перед броском
         rigidbody.isKinematic = false;
@@ -114,11 +127,13 @@ public class DiceRollScript : MonoBehaviour
         Debug.Log("[RollDice] Dice thrown, starting WaitForDiceStop...");
         StartCoroutine(WaitForDiceStop());
 
+        OnDiceRolled?.Invoke();
     }
 
     private IEnumerator WaitForDiceStop()
     {
         Debug.Log("[WaitForDiceStop] Started. Camera following the dice.");
+
         cam.transform.parent = transform;
         cam.transform.position = transform.position + new Vector3(0, 1, -3);
 
@@ -136,8 +151,6 @@ public class DiceRollScript : MonoBehaviour
         Debug.Log($"[WaitForDiceStop] Face number confirmed: {difeFaceNum}");
 
         // Камера возвращается к игроку
-        ReturnCameraToPlayer();
-
         if (int.TryParse(difeFaceNum, out int result))
         {
             Debug.Log($"[WaitForDiceStop] Dice roll result: {result}. Sending to GameManager.");
@@ -162,13 +175,7 @@ public class DiceRollScript : MonoBehaviour
         return stopped;
     }
 
-    private void ReturnCameraToPlayer()
-    {
-        Debug.Log("[ReturnCameraToPlayer] Returning camera to player.");
-        cam.transform.parent = player;
-        cam.transform.position = player.position + new Vector3(0, 5, -10);
-        cam.transform.LookAt(player.position);
-    }
+    
 
     public void ResetDice()
     {
