@@ -8,6 +8,14 @@ using System;
 using Random = UnityEngine.Random;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.IO;
+
+[System.Serializable]
+public class LeaderboardEntry
+{
+    public string playerName;
+    public int score;
+}
 
 public class GameManager : MonoBehaviour
 {
@@ -61,6 +69,7 @@ public class GameManager : MonoBehaviour
     public Sprite starDefaultSprite; // Текстура по умолчанию для звезды (GUI_25)
     public Sprite starGlowingSprite; // Текстура для активной звезды (GUI_24)
 
+    private string leaderboardFilePath;
 
     private void Awake()
     {
@@ -80,10 +89,13 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+
         bool shadersEnabled = PlayerPrefs.GetInt(ShaderPrefKey, 1) == 1;
         SetShaders(shadersEnabled);
 
         DynamicGI.UpdateEnvironment(); // Обновляем глобальное освещение при загрузке сцены
+
+        leaderboardFilePath = Path.Combine(Application.persistentDataPath, "leaderboard.json");
 
         pauseBtn.gameObject.SetActive(true);
 
@@ -298,11 +310,16 @@ public class GameManager : MonoBehaviour
     {
         if (isPlayerMoving) yield break;
 
+        // Устанавливаем флаг движения только для текущего игрока
+        //CharacterAnimation characterAnim = player.GetComponent<CharacterAnimation>();
+        //characterAnim.isWalking = true; // Активируем анимацию ходьбы
+
         RegisterDiceRoll(currentPlayerIndex); // Увеличиваем счетчик бросков перед движением
 
         cam.LookAt = player.transform;
 
-
+        // Устанавливаем флаг движения для текущего игрока
+        PlayerController playerController = player.GetComponent<PlayerController>();
 
         yield return new WaitUntil(() => dice.IsStopped());
         yield return new WaitUntil(() => dice.difeFaceNum != "?");
@@ -313,7 +330,7 @@ public class GameManager : MonoBehaviour
 
         StartCoroutine(SmoothCameraTransition(players[currentPlayerIndex].transform, 0.1f));
 
-        PlayerController playerController = player.GetComponent<PlayerController>();
+        //PlayerController playerController = player.GetComponent<PlayerController>();
         int lastTileIndex = tiles.Count - 1;
 
         while (steps != 0)
@@ -385,6 +402,10 @@ public class GameManager : MonoBehaviour
         }
 
         yield return new WaitForSeconds(0.5f);
+
+        // Останавливаем анимацию ходьбы для текущего игрока
+        //characterAnim.isWalking = false;
+
         isPlayerMoving = false;
 
         NextTurn();
@@ -583,6 +604,37 @@ public class GameManager : MonoBehaviour
         pauseBtn.gameObject.SetActive(false);
 
         Time.timeScale = 0f; // Останавливаем время
+
+        // **Сохраняем данные в JSON**
+        SaveWinnerDataToJson(winner.playerName, score);
+    }
+
+    private void SaveWinnerDataToJson(string playerName, int score)
+    {
+        List<LeaderboardEntry> leaderboard = new List<LeaderboardEntry>();
+
+        // Если файл уже существует, загружаем старые данные
+        if (File.Exists(leaderboardFilePath))
+        {
+            string json = File.ReadAllText(leaderboardFilePath);
+            leaderboard = JsonUtility.FromJson<LeaderboardList>(json).entries;
+        }
+
+        // Добавляем нового победителя
+        leaderboard.Add(new LeaderboardEntry { playerName = playerName, score = score });
+
+        // Записываем обратно в JSON
+        LeaderboardList leaderboardData = new LeaderboardList { entries = leaderboard };
+        string newJson = JsonUtility.ToJson(leaderboardData, true);
+        File.WriteAllText(leaderboardFilePath, newJson);
+
+        Debug.Log("Data saved in JSON: " + newJson);
+    }
+
+    [System.Serializable]
+    private class LeaderboardList
+    {
+        public List<LeaderboardEntry> entries;
     }
 
     private void UpdateStars(int score)

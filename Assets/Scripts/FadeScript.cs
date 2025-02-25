@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,7 +10,15 @@ public class FadeScript : MonoBehaviour
 
     void Start()
     {
-      img = GetComponent<Image>();
+        img = GetComponent<Image>() ?? GetComponentInChildren<Image>();
+
+        if (img == null)
+        {
+            Debug.LogError("FadeScript: Image not found on the object or on child objects!");
+            this.enabled = false;
+            return;
+        }
+
         tempColor = img.color;
         tempColor.a = 1f;
         img.color = tempColor;

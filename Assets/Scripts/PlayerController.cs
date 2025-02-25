@@ -10,6 +10,8 @@ public class PlayerController : MonoBehaviour
     public string playerName; // Имя игрока
     public int diceRolls = 0; // Количество бросков кубика
 
+    public bool isWalking = false; // Для анимации ходьбы
+
     public void SetPlayerName(string name)
     {
         playerName = name;

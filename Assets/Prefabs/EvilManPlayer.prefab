@@ -138,6 +138,7 @@ MonoBehaviour:
   isBot: 0
   playerName: 
   diceRolls: 0
+  isWalking: 0
 --- !u!1 &4444508531765337839
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,9 @@ public class MenuNavigation : MonoBehaviour
 
     public GameObject SettingsMenu;
     public GameObject MainMenu;
-    
+    public GameObject Leaderboard;
+
+
     public void OpenSettings()
     {
         if(SettingsMenu != null)
@@ -22,6 +24,24 @@ public class MenuNavigation : MonoBehaviour
         if (SettingsMenu != null)
         {
             SettingsMenu.SetActive(false);
+            MainMenu.SetActive(true);
+        }
+    }
+
+    public void OpenLeaderboard()
+    {
+        if (Leaderboard != null)
+        {
+            Leaderboard.SetActive(true);
+            MainMenu.SetActive(false);
+        }
+    }
+
+    public void CloseLeaderboard()
+    {
+        if (Leaderboard != null)
+        {
+            Leaderboard.SetActive(false);
             MainMenu.SetActive(true);
         }
     }

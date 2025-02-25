@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,6 +17,12 @@ public class SceneChangeScript : MonoBehaviour
     public void GoToMainMenu()
     {
         StartCoroutine(Delay("menu", -1, ""));
+    }
+
+    // Новый метод для загрузки MainMenu без fadeScript
+    public void LoadMainMenuWithoutFade()
+    {
+        SceneManager.LoadScene("MainMenue", LoadSceneMode.Single);
     }
 
     public IEnumerator Delay(string command, int characterIndex, string name)
