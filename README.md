@@ -9,9 +9,9 @@ Unity 2.5D Circus game project
 - [x] Add sounds and music
 - [x] Create character selection screen
 - [x] Create second scene
-- [ ] Create settings menue (resolution, volume, )
-- [ ] Leaderboard (name, time, count)
-- [ ] Game logic with movement! (waypoint or path)
+- [x] Create settings menue (resolution, volume, )
+- [x] Leaderboard (name, time, count)
+- [x] Game logic with movement! (waypoint or path)
 - [ ] Movement with animations*
-- [ ] Pause menu (time scale)
-- [ ] Version control and GitHub repo
+- [x] Pause menu (time scale)
+- [x] Version control and GitHub repo
