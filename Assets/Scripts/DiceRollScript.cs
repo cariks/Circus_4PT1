@@ -98,6 +98,8 @@ public class DiceRollScript : MonoBehaviour
     {
         if (!isLanded || GameManager.Instance.isPlayerMoving) return;
 
+        GameManager.Instance.OnFirstDiceRoll();
+
         rollButton.interactable = false;  // Делаем кнопку неактивной
 
         Debug.Log("[RollDice] Rolling the dice in 0.5 seconds...");

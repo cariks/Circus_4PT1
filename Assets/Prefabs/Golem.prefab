@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8032200209956258185}
   - component: {fileID: 3845327753342185158}
   - component: {fileID: 8170245266422453220}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: NameField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -184,7 +184,7 @@ GameObject:
   - component: {fileID: 7942421412165834144}
   - component: {fileID: 7778625832803343659}
   - component: {fileID: 3799578786269283612}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Golem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -306,3 +306,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentTileIndex: 0
   playerIndex: 0
+  isBot: 0
+  playerName: 
+  diceRolls: 0

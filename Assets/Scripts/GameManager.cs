@@ -4,6 +4,10 @@ using UnityEngine;
 using Cinemachine;
 using UnityEngine.UI;
 using UnityEngine.Rendering.PostProcessing;
+using System;
+using Random = UnityEngine.Random;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -33,6 +37,31 @@ public class GameManager : MonoBehaviour
     private const string ShaderPrefKey = "ShadersEnabled"; // Ключ из настроек
 
 
+    private Dictionary<int, int> playerDiceRolls = new Dictionary<int, int>(); // Словарь для хранения количества бросков
+
+    public TextMeshProUGUI turnText; // UI текст для текущего игрока
+    public TextMeshProUGUI gameTimeText; // UI текст для времени игры
+    private float gameTime = 0f; // Время игры
+
+    private bool gameStarted = false; // Флаг, отслеживающий начало игры
+
+    public GameObject victoryPanel; // Окно победы
+    public TextMeshProUGUI winnerNameText;
+    public TextMeshProUGUI winnerTimeText;
+    public TextMeshProUGUI winnerScoreText;
+    public bool gameEnded = false;
+
+    public Button pauseBtn;
+
+    private bool isVictoryScreenActive = false;
+
+    public Image star1; // Первая звезда
+    public Image star2; // Вторая звезда
+    public Image star3; // Третья звезда
+    public Sprite starDefaultSprite; // Текстура по умолчанию для звезды (GUI_25)
+    public Sprite starGlowingSprite; // Текстура для активной звезды (GUI_24)
+
+
     private void Awake()
     {
         if (Instance == null)
@@ -56,6 +85,7 @@ public class GameManager : MonoBehaviour
 
         DynamicGI.UpdateEnvironment(); // Обновляем глобальное освещение при загрузке сцены
 
+        pauseBtn.gameObject.SetActive(true);
 
         cam.transform.position = startCameraPosition;
         cam.transform.rotation = startCameraRotation;
@@ -69,12 +99,17 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < players.Count; i++)
         {
+            playerDiceRolls[i] = 0;
+
             PlayerController playerController = players[i].GetComponent<PlayerController>();
             if (playerController != null)
             {
                 playerController.playerIndex = i; // Устанавливаем уникальный индекс для каждого игрока
+                
             }
         }
+
+        
 
         // Получаем компонент DepthOfField из PostProcessVolume
         if (postProcessVolume.profile.TryGetSettings(out dof))
@@ -82,7 +117,24 @@ public class GameManager : MonoBehaviour
             dof.focusDistance.value = 8f; // Устанавливаем начальное значение
         }
 
+        turnText.gameObject.SetActive(false);
+        gameTimeText.gameObject.SetActive(false);
+
         StartCoroutine(StartGameSequence());
+
+    }
+
+    private void Update()
+    {
+        if (gameStarted)
+        {
+            gameTime += Time.deltaTime;
+            int minutes = Mathf.FloorToInt(gameTime / 60);
+            int seconds = Mathf.FloorToInt(gameTime % 60);
+            gameTimeText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        }
+
+        turnText.text = $"{players[currentPlayerIndex].GetComponent<PlayerController>().playerName}'s turn";
     }
 
     public void SetShaders(bool isEnabled)
@@ -93,6 +145,16 @@ public class GameManager : MonoBehaviour
         }
 
         DynamicGI.UpdateEnvironment(); // Обновляем глобальное освещение
+    }
+
+    public void OnFirstDiceRoll()
+    {
+        if (!gameStarted)
+        {
+            gameStarted = true; // Запускаем время
+            turnText.gameObject.SetActive(true);
+            gameTimeText.gameObject.SetActive(true);
+        }
     }
 
     private IEnumerator StartGameSequence()
@@ -130,7 +192,8 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
 
-
+        //turnText.gameObject.SetActive(true);
+        //gameTimeText.gameObject.SetActive(true);
 
         //cam.LookAt = diceTransform;
 
@@ -235,6 +298,8 @@ public class GameManager : MonoBehaviour
     {
         if (isPlayerMoving) yield break;
 
+        RegisterDiceRoll(currentPlayerIndex); // Увеличиваем счетчик бросков перед движением
+
         cam.LookAt = player.transform;
 
 
@@ -268,7 +333,12 @@ public class GameManager : MonoBehaviour
                 Debug.Log($"[MovePlayer] 🎉 Player {playerController.playerIndex} ({player.name}) reached the finish exactly! 🎉");
 
                 steps = 0; // Победа, больше ходов не делаем
+
+                CheckForWinCondition(player);
+
+
                 break;
+                
             }
 
             // 2️ Затем проверяем, перескакивает ли он финиш
@@ -316,11 +386,19 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
         isPlayerMoving = false;
+
         NextTurn();
     }
 
 
-
+    private void RegisterDiceRoll(int playerIndex)
+    {
+        if (playerDiceRolls.ContainsKey(playerIndex))
+        {
+            playerDiceRolls[playerIndex]++;
+            Debug.Log($"Player {playerIndex} rolled the dice {playerDiceRolls[playerIndex]} times!");
+        }
+    }
 
 
 
@@ -402,6 +480,8 @@ public class GameManager : MonoBehaviour
 
         currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
 
+        UpdateTurnText(); // Обновляем UI с именем игрока
+
         Debug.Log($"Switching to player {currentPlayerIndex}, {players[currentPlayerIndex].name}.");
 
         // Переводим камеру на игрока после завершения хода
@@ -410,6 +490,15 @@ public class GameManager : MonoBehaviour
 
         // Проверяем, является ли игрок ботом и если да, подбрасываем кубик
         StartCoroutine(HandleBotTurn());
+    }
+
+    private void UpdateTurnText()
+    {
+        if (turnText != null && players.Count > 0)
+        {
+            string playerName = players[currentPlayerIndex].name;
+            turnText.text = $"{playerName}'s turn";
+        }
     }
 
     private IEnumerator HandleBotTurn()
@@ -439,6 +528,116 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
+
+
+    // UZVARE
+
+    private void CheckForWinCondition(GameObject player)
+    {
+        if (gameEnded) return; // Если игра уже завершена, не продолжаем
+
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        int lastTileIndex = tiles.Count - 1;
+
+        if (playerController.currentTileIndex == lastTileIndex)
+        {
+            StartCoroutine(EndGameWithDelay(playerController));
+        }
+    }
+
+    private IEnumerator EndGameWithDelay(PlayerController winner)
+    {
+        yield return new WaitForSeconds(0.2f); // Задержка в 0.2 секунду перед завершением игры
+        gameEnded = true; // Останавливаем игру
+        ShowVictoryScreen(winner);
+    }
+
+
+    private void ShowVictoryScreen(PlayerController winner)
+    {
+        victoryPanel.SetActive(true);
+        isVictoryScreenActive = true;
+        RectTransform panelRect = victoryPanel.GetComponent<RectTransform>();
+
+        // Устанавливаем панель выше экрана
+        panelRect.anchoredPosition = new Vector2(0, Screen.height);
+
+        winnerNameText.text = $"{winner.playerName}";
+
+        int minutes = Mathf.FloorToInt(gameTime / 60);
+        int seconds = Mathf.FloorToInt(gameTime % 60);
+        winnerTimeText.text = $"{minutes:00}:{seconds:00}";
+
+        int totalRolls = playerDiceRolls[winner.playerIndex];
+        int totalCells = tiles.Count; // Получаем количество клеток из списка tiles
+
+        int score = CalculateScore(totalCells, totalRolls, gameTime);
+        winnerScoreText.text = $"{score}";
+
+        // Логика для изменения звезд в зависимости от набранных очков
+        UpdateStars(score);
+
+        StartCoroutine(AnimateVictoryPanel(panelRect));
+
+        pauseBtn.gameObject.SetActive(false);
+
+        Time.timeScale = 0f; // Останавливаем время
+    }
+
+    private void UpdateStars(int score)
+    {
+        // Обнуляем все звезды, устанавливаем их в текстуру по умолчанию
+        star1.sprite = starDefaultSprite;
+        star2.sprite = starDefaultSprite;
+        star3.sprite = starDefaultSprite;
+
+        // Проверяем, сколько звезд должно быть за счет набранных очков
+        if (score >= 800)
+        {
+            star1.sprite = starGlowingSprite;
+            star2.sprite = starGlowingSprite;
+            star3.sprite = starGlowingSprite;
+        }
+        else if (score >= 500)
+        {
+            star1.sprite = starGlowingSprite;
+            star2.sprite = starGlowingSprite;
+        }
+        else if (score >= 200)
+        {
+            star1.sprite = starGlowingSprite;
+        }
+    }
+
+
+    // Функция для подсчёта очков
+    private int CalculateScore(int totalCells, int diceRolls, float timeSpent)
+    {
+        int score = Mathf.RoundToInt(1000f * (totalCells / (float)diceRolls) / (timeSpent / 60f + 1f));
+        return Mathf.Clamp(score, 1, 1000); // Ограничиваем от 1 до 1000
+    }
+
+    private IEnumerator AnimateVictoryPanel(RectTransform panelRect)
+    {
+        float duration = 0.9f; // Длительность анимации
+        float elapsedTime = 0f;
+
+        Vector2 startPos = new Vector2(0, Screen.height);
+        Vector2 targetPos = new Vector2(0, -40); // Панель приземляется на (0,0)
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.unscaledDeltaTime;
+            float t = elapsedTime / duration;
+            t = t * t * (3f - 2f * t); // Квадратичное замедление (SmootherStep)
+
+            panelRect.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
+            yield return null;
+        }
+
+        panelRect.anchoredPosition = targetPos; // Фиксируем точную позицию
+    }
 
 
 

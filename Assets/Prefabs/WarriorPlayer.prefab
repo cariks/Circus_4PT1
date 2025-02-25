@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5131218436053519533}
   - component: {fileID: 3131975256377463361}
   - component: {fileID: 6948303945431433637}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: WarriorPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,6 +135,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentTileIndex: 0
   playerIndex: 0
+  isBot: 0
+  playerName: 
+  diceRolls: 0
 --- !u!1 &3679903702927053952
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,7 +149,7 @@ GameObject:
   - component: {fileID: 3418181296942083441}
   - component: {fileID: 4617641682483383475}
   - component: {fileID: 5315804004236828095}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: NameField
   m_TagString: Untagged
   m_Icon: {fileID: 0}

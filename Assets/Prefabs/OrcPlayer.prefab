@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6781037918554780950}
   - component: {fileID: 5281558643004426138}
   - component: {fileID: 6809875769586357997}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: NameField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -184,7 +184,7 @@ GameObject:
   - component: {fileID: 7989924306408546350}
   - component: {fileID: 3098631701409217321}
   - component: {fileID: 8426809992813474117}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: OrcPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -306,3 +306,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentTileIndex: 0
   playerIndex: 0
+  isBot: 0
+  playerName: 
+  diceRolls: 0

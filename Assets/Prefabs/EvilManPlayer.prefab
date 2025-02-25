@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7679570920263735557}
   - component: {fileID: 8065682497488913191}
   - component: {fileID: 364438157051864609}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: EvilManPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,6 +135,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentTileIndex: 0
   playerIndex: 0
+  isBot: 0
+  playerName: 
+  diceRolls: 0
 --- !u!1 &4444508531765337839
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,7 +149,7 @@ GameObject:
   - component: {fileID: 6772025759524261447}
   - component: {fileID: 2583248513145364452}
   - component: {fileID: 1002006986204553414}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: NameField
   m_TagString: Untagged
   m_Icon: {fileID: 0}

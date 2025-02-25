@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5360917452288471407}
   - component: {fileID: 5901898182060329049}
   - component: {fileID: 7371024749727622555}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: NameField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -184,7 +184,7 @@ GameObject:
   - component: {fileID: 886503963540934862}
   - component: {fileID: 3667407255959544923}
   - component: {fileID: 4150009648512814368}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: FallenAngel2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -306,3 +306,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentTileIndex: 0
   playerIndex: 0
+  isBot: 0
+  playerName: 
+  diceRolls: 0

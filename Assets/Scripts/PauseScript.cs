@@ -6,16 +6,13 @@ public class PauseScript : MonoBehaviour
 {
     public GameObject pausePanel; // Окно паузы
     public GameObject settingPanel;
+    public GameManager gameManager; // Ссылка на GameManager
 
     private bool isPaused = false;
 
     void Update()
     {
-        // Если нажата клавиша ESC, включаем/выключаем паузу
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            TogglePause();
-        }
+
     }
 
     public void TogglePause()

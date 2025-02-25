@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Versioning;
 using UnityEngine;
 using System.IO;
 using Random = UnityEngine.Random;
 
 public class PlayerScript : MonoBehaviour
 {
-
     public GameObject[] playerPrefabs;
     int characterIndex;
     public GameObject spawnPoint;
@@ -18,9 +16,7 @@ public class PlayerScript : MonoBehaviour
     private const string textFileName = "playerNames";
 
     public static event Action<List<GameObject>> OnPlayersReady;
-
-    public static event Action<GameObject> OnPlayerReady; // Создаём событие для главного игрока
-
+    public static event Action<GameObject> OnPlayerReady;
 
     void Start()
     {
@@ -28,43 +24,53 @@ public class PlayerScript : MonoBehaviour
         GameObject mainCharacter = Instantiate(playerPrefabs[characterIndex],
             spawnPoint.transform.position, Quaternion.identity);
 
-        mainCharacter.GetComponent<NameScript>().SetPlayerName(PlayerPrefs.GetString("PlayerName"));
+        string mainPlayerName = PlayerPrefs.GetString("PlayerName");
+        mainCharacter.GetComponent<NameScript>().SetPlayerName(mainPlayerName);
+        mainCharacter.GetComponent<PlayerController>().SetPlayerName(mainPlayerName);
+
         OnPlayerReady?.Invoke(mainCharacter);
 
-        // Получаем количество других игроков
         int playerCount = PlayerPrefs.GetInt("PlayerCount");
+        otherPlayers = new int[playerCount - 1];
 
-        // Создаем массив otherPlayers для ботов
-        otherPlayers = new int[playerCount - 1]; // -1 потому что главный игрок не учитывается
-        string[] nameArray = ReadLinesFromFile(textFileName);
+        List<string> availableNames = new List<string>(ReadLinesFromFile(textFileName)); // Загружаем имена
 
         List<GameObject> players = new List<GameObject> { mainCharacter };
 
-        for (int i = 0; i < otherPlayers.Length; i++) // Здесь мы создаем только других игроков
+        for (int i = 0; i < otherPlayers.Length; i++)
         {
             spawnPoint.transform.position += new Vector3(0.4f, 0, 0.08f);
             index = Random.Range(0, playerPrefabs.Length);
             GameObject character = Instantiate(playerPrefabs[index], spawnPoint.transform.position, Quaternion.identity);
-            character.GetComponent<NameScript>().SetPlayerName(nameArray[Random.Range(0, nameArray.Length)]);
-            players.Add(character);
 
-            // Присваиваем флаг bot для всех, кроме главного игрока
+            string botName;
+            if (availableNames.Count > 0)
+            {
+                int nameIndex = Random.Range(0, availableNames.Count);
+                botName = availableNames[nameIndex];
+                availableNames.RemoveAt(nameIndex); // Удаляем имя, чтобы оно не повторялось
+            }
+            else
+            {
+                botName = $"Bot_{i + 1}"; // Если имен не хватает, используем шаблонное имя
+            }
+
+            character.GetComponent<NameScript>().SetPlayerName(botName);
+            character.GetComponent<PlayerController>().SetPlayerName(botName);
+            players.Add(character);
             character.GetComponent<PlayerController>().isBot = true;
         }
 
-        // Извлекаем событие, когда все игроки готовы
         OnPlayersReady?.Invoke(players);
     }
-
 
     string[] ReadLinesFromFile(string fileName)
     {
         TextAsset textAsset = Resources.Load<TextAsset>(fileName);
-
         if (textAsset != null)
-            return textAsset.text.Split(new[] { '\r', '\n' },
-                System.StringSplitOptions.RemoveEmptyEntries);
-        else
-            Debug.LogError("File not found: " + fileName); return new string[0];
+            return textAsset.text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+        Debug.LogError("File not found: " + fileName);
+        return new string[0];
     }
 }
